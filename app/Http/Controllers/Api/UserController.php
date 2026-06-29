@@ -3,83 +3,88 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Http\Resources\UserCollection;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        return UserResource::collection(User::all());
+        return User::with('image')->get()->map(fn($user) => new UserResource($user));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone_number' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8',
+            'email' => 'nullable|string|email|max:255',
+            'phone' => 'required|string|max:20',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone_number' => $validated['phone_number'] ?? null,
-            'password' => Hash::make($validated['password']),
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'],
         ]);
 
-        return new UserResource($user);
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('images', 'public');
+            $user->image()->create(['url' => Storage::url($path)]);
+        }
+
+        return response()->json(
+            new UserResource($user->load('image')),
+            201
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
+    public function show(User $user): JsonResponse
     {
-        return UserResource::make($user);
+        return response()->json(
+            new UserResource($user->load('image')),
+            200
+        );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user) : JsonResponse
+    public function update(Request $request, User $user): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8',
-            'phone_number' => 'nullable|string|max:255',
+            'email' => 'nullable|string|email|max:255',
+            'phone' => 'sometimes|string|max:20',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $user->update($request->all());
+        $user->update($validated);
 
-        return response()->json([
-            'message' => 'User updated successfully',
-            'user' => UserResource::make($user)
-        ], 200);
+        if ($request->hasFile('image')) {
+            if ($user->image) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $user->image->url));
+                $user->image->delete();
+            }
+            $path = $request->file('image')->store('images', 'public');
+            $user->image()->create(['url' => Storage::url($path)]);
+        }
+
+        return response()->json(
+            new UserResource($user->load('image')),
+            200
+        );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user) :JsonResponse
+    public function destroy(User $user): JsonResponse
     {
-        $userName = $user ->name;
+        if ($user->image) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $user->image->url));
+            $user->image->delete();
+        }
+
         $user->delete();
-        return response()->json([
-            'message' => 'User deleted successfully',
-            'user' => $userName
-        ], 200);
+
+        return response()->json(null, 204);
     }
 }
