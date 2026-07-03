@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte Render - Red App</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        .portada {
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .portada h1 { font-size: 2.5em; margin-bottom: 0.3em; }
+        .portada h2 { font-size: 1.5em; font-weight: 400; margin-bottom: 1.5em; color: #e94560; }
+        .portada p { font-size: 1.1em; margin: 0.3em 0; color: #ccc; }
+        .contenido { padding: 40px; }
+        .contenido h2 { color: #1a1a2e; border-bottom: 3px solid #e94560; padding-bottom: 10px; }
+        .captura {
+            margin: 30px 0;
+            text-align: center;
+        }
+        .captura img {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .captura p {
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="portada">
+        <h1>Red App - Web Service</h1>
+        <h2>Reporte de Publicación en Render</h2>
+        <p><strong>Materia:</strong> Desarrollo de Aplicaciones Web</p>
+        <p><strong>Alumno:</strong> Jazmin Rodriguez Flores</p>
+        <p><strong>Fecha:</strong> Julio 2026</p>
+    </div>
+
+    <div class="contenido">
+        <h2>Captura 1: Ejecución del Sitio</h2>
+        <div class="captura">
+            <img src="captura1.png" alt="Captura del sitio funcionando">
+            <p>Vista del Web Service funcionando en Render</p>
+        </div>
+
+        <h2>Captura 2: Plataforma Administrativa de Render</h2>
+        <div class="captura">
+            <img src="captura2.png" alt="Captura del dashboard de Render">
+            <p>Dashboard de Render mostrando el proyecto desplegado</p>
+        </div>
+    </div>
+</body>
+</html>
