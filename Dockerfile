@@ -17,8 +17,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader \
     && chmod -R 777 storage bootstrap/cache
 
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf
+COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
