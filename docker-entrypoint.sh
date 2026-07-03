@@ -5,10 +5,8 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:LPjudc04HobFqzOTvcALaoXeqI1WHoUfzTc4vm5SuVQ=" ]; then
-    php artisan key:generate --force
-fi
-
+php artisan config:clear
+php artisan key:generate --force
 php artisan migrate --force
 php artisan storage:link --force
 
