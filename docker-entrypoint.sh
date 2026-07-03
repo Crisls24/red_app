@@ -6,6 +6,8 @@ if [ ! -f .env ]; then
 fi
 
 php artisan config:clear
+php artisan route:clear
+php artisan view:clear
 php artisan key:generate --force
 php artisan migrate --force
 php artisan storage:link --force
