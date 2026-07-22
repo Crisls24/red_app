@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class User extends Model
@@ -15,8 +16,13 @@ class User extends Model
         'phone',
     ];
 
-    public function image(): MorphOne
+    public function images(): MorphMany
     {
-        return $this->morphOne(Image::class, 'imageable');
+        return $this->morphMany(Image::class, 'imageable');
+    }
+
+    public function firstImage(): MorphOne
+    {
+        return $this->morphOne(Image::class, 'imageable')->oldestOfMany();
     }
 }

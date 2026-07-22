@@ -14,12 +14,16 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'image' => $this->whenLoaded('image', function () {
-                return [
-                    'id' => $this->image->id,
-                    'url' => $this->image->url,
-                ];
+            'image' => $this->whenLoaded('images', function () {
+                return $this->images->first()->url ?? null;
             }),
+            'images' => $this->whenLoaded('images', function () {
+                return $this->images->map(fn($img) => [
+                    'id' => $img->id,
+                    'url' => $img->url,
+                ]);
+            }),
+            'image_count' => $this->whenCounted('images'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

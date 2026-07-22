@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\Image;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return User::with('image')->get()->map(fn($user) => new UserResource($user));
+        return User::with('images')->get()->map(fn($user) => new UserResource($user));
     }
 
     public function store(Request $request): JsonResponse
@@ -22,7 +23,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|string|email|max:255',
             'phone' => 'required|string|max:20',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $user = User::create([
@@ -31,13 +33,15 @@ class UserController extends Controller
             'phone' => $validated['phone'],
         ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('images', 'public');
-            $user->image()->create(['url' => Storage::url($path)]);
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('images', 'public');
+                $user->images()->create(['url' => Storage::disk('public')->url($path)]);
+            }
         }
 
         return response()->json(
-            new UserResource($user->load('image')),
+            new UserResource($user->load('images')),
             201
         );
     }
@@ -45,7 +49,7 @@ class UserController extends Controller
     public function show(User $user): JsonResponse
     {
         return response()->json(
-            new UserResource($user->load('image')),
+            new UserResource($user->load('images')),
             200
         );
     }
@@ -56,34 +60,61 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'nullable|string|email|max:255',
             'phone' => 'sometimes|string|max:20',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         $user->update($validated);
 
-        if ($request->hasFile('image')) {
-            if ($user->image) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $user->image->url));
-                $user->image->delete();
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('images', 'public');
+                $user->images()->create(['url' => Storage::disk('public')->url($path)]);
             }
-            $path = $request->file('image')->store('images', 'public');
-            $user->image()->create(['url' => Storage::url($path)]);
         }
 
         return response()->json(
-            new UserResource($user->load('image')),
+            new UserResource($user->load('images')),
             200
         );
     }
 
     public function destroy(User $user): JsonResponse
     {
-        if ($user->image) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $user->image->url));
-            $user->image->delete();
+        foreach ($user->images as $image) {
+            $path = str_replace('/storage/', '', $image->url);
+            Storage::disk('public')->delete($path);
+            $image->delete();
         }
 
         $user->delete();
+
+        return response()->json(null, 204);
+    }
+
+    public function addImages(Request $request, User $user): JsonResponse
+    {
+        $request->validate([
+            'images' => 'required|array',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        foreach ($request->file('images') as $file) {
+            $path = $file->store('images', 'public');
+            $user->images()->create(['url' => Storage::disk('public')->url($path)]);
+        }
+
+        return response()->json(
+            new UserResource($user->load('images')),
+            200
+        );
+    }
+
+    public function deleteImage(Image $image): JsonResponse
+    {
+        $path = str_replace('/storage/', '', $image->url);
+        Storage::disk('public')->delete($path);
+        $image->delete();
 
         return response()->json(null, 204);
     }
