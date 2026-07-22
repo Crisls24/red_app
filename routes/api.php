@@ -12,3 +12,8 @@ Route::post('users/{user}/images', [UserController::class, 'addImages'])
 
 Route::delete('images/{image}', [UserController::class, 'deleteImage'])
     ->name('api.image.delete');
+
+Route::get('/seed', function () {
+    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => \Database\Seeders\UserSeeder::class, '--force' => true]);
+    return response()->json(['message' => 'Seed completed! Added 15 contacts.']);
+});
