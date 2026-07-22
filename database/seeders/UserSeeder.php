@@ -4,12 +4,16 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $hexColors = [
+            'E74C3C', '2ECC71', '3498DB', '9B59B6', 'F1C40F',
+            'E67E22', '1ABC9C', 'EC407A', '00BCD4', '673AB7',
+        ];
+
         $contacts = [
             ['name' => 'María García',     'email' => 'maria.garcia@gmail.com',    'phone' => '7711234567', 'photo' => true],
             ['name' => 'Carlos López',     'email' => 'carlos.lopez@outlook.com',  'phone' => '7229876543', 'photo' => true],
@@ -28,22 +32,10 @@ class UserSeeder extends Seeder
             ['name' => 'Lucía Romero',     'email' => 'lucia.romero@hotmail.com',  'phone' => '7714567098', 'photo' => true],
         ];
 
-        $colors = [
-            [231, 76, 60],   // rojo
-            [46, 204, 113],  // verde
-            [52, 152, 219],  // azul
-            [155, 89, 182],  // morado
-            [241, 196, 15],  // amarillo
-            [230, 126, 34],  // naranja
-            [26, 188, 156],  // turquesa
-            [236, 64, 122],  // rosa
-            [0, 188, 212],   // cyan
-            [103, 58, 183],  // deep purple
-        ];
-
-        $storagePath = Storage::disk('public')->path('images');
-
         foreach ($contacts as $i => $data) {
+            $existing = User::where('phone', $data['phone'])->first();
+            if ($existing) continue;
+
             $user = User::create([
                 'name'  => $data['name'],
                 'email' => $data['email'],
@@ -51,46 +43,19 @@ class UserSeeder extends Seeder
             ]);
 
             if ($data['photo']) {
-                $color = $colors[$i % count($colors)];
-                $fileName = 'seed_' . strtolower(str_replace(' ', '_', $data['name'])) . '_' . time() . $i . '.jpg';
-                $filePath = $storagePath . '/' . $fileName;
+                $initials = '';
+                foreach (explode(' ', $data['name']) as $part) {
+                    if (!empty($part[0])) {
+                        $initials .= mb_strtoupper($part[0]);
+                    }
+                }
+                $initials = mb_substr($initials, 0, 2);
 
-                $this->generatePlaceholderImage($filePath, $data['name'], $color);
+                $color = $hexColors[$i % count($hexColors)];
+                $url = "https://placehold.co/400x400/{$color}/FFFFFF?text={$initials}&font=roboto";
 
-                $user->images()->create([
-                    'url' => \Illuminate\Support\Facades\Storage::disk('public')->url('images/' . $fileName),
-                ]);
+                $user->images()->create(['url' => $url]);
             }
         }
-    }
-
-    private function generatePlaceholderImage(string $path, string $name, array $color): void
-    {
-        $width = 400;
-        $height = 400;
-        $img = imagecreatetruecolor($width, $height);
-
-        $bg = imagecolorallocate($img, $color[0], $color[1], $color[2]);
-        imagefill($img, 0, 0, $bg);
-
-        $initials = '';
-        $parts = explode(' ', $name);
-        foreach ($parts as $part) {
-            if (!empty($part[0])) {
-                $initials .= mb_strtoupper($part[0]);
-            }
-        }
-        $initials = mb_substr($initials, 0, 2);
-
-        $white = imagecolorallocate($img, 255, 255, 255);
-        $fontSize = 5;
-        $textWidth = imagefontwidth($fontSize) * strlen($initials);
-        $textHeight = imagefontheight($fontSize);
-        $x = (int)(($width - $textWidth) / 2);
-        $y = (int)(($height - $textHeight) / 2);
-        imagestring($img, $fontSize, $x, $y, $initials, $white);
-
-        imagejpeg($img, $path, 85);
-        imagedestroy($img);
     }
 }

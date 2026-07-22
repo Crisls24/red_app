@@ -15,5 +15,10 @@ Route::delete('images/{image}', [UserController::class, 'deleteImage'])
 
 Route::get('/seed', function () {
     \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => \Database\Seeders\UserSeeder::class, '--force' => true]);
-    return response()->json(['message' => 'Seed completed! Added 15 contacts.']);
+    return response()->json(['message' => 'Seed completed!']);
+});
+
+Route::get('/reset-seed', function () {
+    \App\Models\User::where('id', '>', 2)->delete();
+    return response()->json(['message' => 'Reset: deleted all users except id 1-2']);
 });
